@@ -132,7 +132,7 @@ class MinibatchIndexRV(IntegersRV):
 minibatch_index = MinibatchIndexRV()
 
 
-def is_minibatch(v):
+def is_minibatch(v: TensorVariable) -> bool:
     from aesara.tensor.subtensor import AdvancedSubtensor
 
     return (
@@ -142,7 +142,7 @@ def is_minibatch(v):
     )
 
 
-def valid_for_minibatch(v):
+def valid_for_minibatch(v: TensorVariable) -> bool:
     from aesara.scalar import Cast
     from aesara.tensor.elemwise import Elemwise
 
