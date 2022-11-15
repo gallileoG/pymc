@@ -60,7 +60,7 @@ from pymc.aesaraf import (
     replace_rvs_by_values,
 )
 from pymc.blocking import DictToArrayBijection, RaveledVars
-from pymc.data import GenTensorVariable, Minibatch
+from pymc.data import GenTensorVariable
 from pymc.distributions.logprob import _joint_logp
 from pymc.distributions.transforms import _default_transform
 from pymc.exceptions import ImputationWarning, SamplingError, ShapeError, ShapeWarning
@@ -1303,7 +1303,7 @@ class Model(WithMemoization, metaclass=ContextMeta):
         else:
             if (
                 isinstance(data, Variable)
-                and not isinstance(data, (GenTensorVariable, Minibatch))
+                and not isinstance(data, (GenTensorVariable))
                 and data.owner is not None
                 # The only Aesara operation we allow on observed data is type casting
                 # Although we could allow for any graph that does not depend on other RVs
@@ -1311,6 +1311,7 @@ class Model(WithMemoization, metaclass=ContextMeta):
                     isinstance(data.owner.op, Elemwise)
                     and isinstance(data.owner.op.scalar_op, Cast)
                 )
+                and not data.name.startswith("minibatch")
             ):
                 raise TypeError(
                     "Variables that depend on other nodes cannot be used for observed data."
