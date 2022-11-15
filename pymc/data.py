@@ -143,16 +143,17 @@ def Minibatch(
     >>> mdata1, mdata2 = Minibatch(data1, data2, batch_size=10)
     """
 
-    def _minibatch_name(v):
-        v.name = f"minibatch_{v.name}_{id(v)}"
-        return v
+    def _minibatch_name(v1, v0):
+        base_name = getattr(v0, "name", "")
+        v1.name = f"minibatch_{base_name}_{id(v0)}"
+        return v1
 
     slc = at_rng().uniform(0, variable.shape[0], size=batch_size).astype(np.int64)
     if variables:
         variables = (variable, *variables)
-        return tuple([_minibatch_name(at.as_tensor(v)[slc]) for v in variables])
+        return tuple([_minibatch_name(at.as_tensor(v)[slc], v) for v in variables])
     else:
-        return _minibatch_name(at.as_tensor(variable)[slc])
+        return _minibatch_name(at.as_tensor(variable)[slc], variable)
 
 
 def determine_coords(
