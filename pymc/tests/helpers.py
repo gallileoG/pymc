@@ -26,7 +26,7 @@ import numpy.random as nr
 from aesara.gradient import verify_grad as at_verify_grad
 from aesara.graph import ancestors
 from aesara.graph.rewriting.basic import in2out
-from aesara.sandbox.rng_mrg import MRG_RandomStream as RandomStream
+from aesara.tensor.random import RandomStream
 from aesara.tensor.random.op import RandomVariable
 
 import pymc as pm

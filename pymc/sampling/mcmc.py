@@ -457,7 +457,7 @@ def sample(
         if "nuts" in kwargs:
             nuts_kwargs = kwargs.pop("nuts")
             [kwargs.setdefault(k, v) for k, v in nuts_kwargs.items()]
-        _log.info("Auto-assigning NUTS sampler...")
+        _log.info("Auto-assigning NUTS sampler...:")
         initial_points, step = init_nuts(
             init=init,
             chains=chains,
@@ -1212,7 +1212,6 @@ def init_nuts(
         jitter="jitter" in init,
         jitter_max_retries=jitter_max_retries,
     )
-
     apoints = [DictToArrayBijection.map(point) for point in initial_points]
     apoints_data = [apoint.data for apoint in apoints]
     potential: quadpotential.QuadPotential
