@@ -370,10 +370,11 @@ class ObjectiveFunction:
             more_replacements=more_replacements,
             total_grad_norm_constraint=total_grad_norm_constraint,
         )
+        seed = self.approx.rng.integers(2**30, dtype=np.int64)
         if score:
-            step_fn = compile_pymc([], updates.loss, updates=updates, **fn_kwargs)
+            step_fn = compile_pymc([], updates.loss, updates=updates, random_seed=seed, **fn_kwargs)
         else:
-            step_fn = compile_pymc([], [], updates=updates, **fn_kwargs)
+            step_fn = compile_pymc([], [], updates=updates, random_seed=seed, **fn_kwargs)
         return step_fn
 
     @aesara.config.change_flags(compute_test_value="off")
@@ -402,7 +403,8 @@ class ObjectiveFunction:
         if more_replacements is None:
             more_replacements = {}
         loss = self(sc_n_mc, more_replacements=more_replacements)
-        return compile_pymc([], loss, **fn_kwargs)
+        seed = self.approx.rng.integers(2**30, dtype=np.int64)
+        return compile_pymc([], loss, random_seed=seed, **fn_kwargs)
 
     @aesara.config.change_flags(compute_test_value="off")
     def __call__(self, nmc, **kwargs):
