@@ -128,6 +128,19 @@ def Minibatch(
 ) -> Tuple[TensorVariable]:
     """
     Get random slices from variables from the leading dimension.
+
+
+    Parameters
+    ----------
+    variable: TensorVariable
+    variables: TensorVariable
+    batch_size: int
+
+    Examples
+    --------
+    >>> data1 = np.random.randn(10, 10)
+    >>> data2 = np.random.randn(10, 20)
+    >>> mdata1, mdata2 = Minibatch(data1, data2, batch_size=10)
     """
 
     def _minibatch_name(v):
