@@ -26,12 +26,14 @@ import aesara.tensor as at
 import numpy as np
 
 from aesara.compile.sharedvalue import SharedVariable
+from aesara.tensor.random import RandomStream
+from aesara.tensor.random.basic import IntegersRV
 from aesara.tensor.type import TensorType
 from aesara.tensor.var import TensorConstant, TensorVariable
 
 import pymc as pm
 
-from pymc.aesaraf import at_rng, convert_observed_data
+from pymc.aesaraf import convert_observed_data
 
 __all__ = [
     "get_data",
@@ -123,6 +125,34 @@ class GeneratorAdapter:
         return hash(id(self))
 
 
+class MinibatchIndexRV(IntegersRV):
+    _print_name = ("minibatch_index", r"\operatorname{minibatch\_index}")
+
+
+minibatch_index = MinibatchIndexRV()
+
+
+def is_minibatch(v):
+    from aesara.scalar import Cast
+    from aesara.tensor.elemwise import Elemwise
+    from aesara.tensor.subtensor import AdvancedSubtensor
+
+    return (
+        isinstance(v.owner.op, AdvancedSubtensor)
+        and isinstance(v.owner.inputs[1].owner.op, MinibatchIndexRV)
+        and (
+            v.owner.inputs[0].owner is None
+            # The only Aesara operation we allow on observed data is type casting
+            # Although we could allow for any graph that does not depend on other RVs
+            or (
+                isinstance(v.owner.inputs[0].owner.op, Elemwise)
+                and v.owner.inputs[0].owner.inputs[0].owner is None
+                and isinstance(v.owner.inputs[0].owner.op.scalar_op, Cast)
+            )
+        )
+    )
+
+
 def Minibatch(
     variable: TensorVariable, *variables: TensorVariable, batch_size: int
 ) -> Tuple[TensorVariable]:
@@ -143,17 +173,13 @@ def Minibatch(
     >>> mdata1, mdata2 = Minibatch(data1, data2, batch_size=10)
     """
 
-    def _minibatch_name(v1, v0):
-        base_name = getattr(v0, "name", "")
-        v1.name = f"minibatch_{base_name}_{id(v0)}"
-        return v1
-
-    slc = at_rng().uniform(0, variable.shape[0], size=batch_size).astype(np.int64)
+    rng = RandomStream()
+    slc = rng.gen(minibatch_index, 0, variable.shape[0], size=batch_size)
     if variables:
         variables = (variable, *variables)
-        return tuple([_minibatch_name(at.as_tensor(v)[slc], v) for v in variables])
+        return tuple([at.as_tensor(v)[slc] for v in variables])
     else:
-        return _minibatch_name(at.as_tensor(variable)[slc], variable)
+        return at.as_tensor(variable)[slc]
 
 
 def determine_coords(

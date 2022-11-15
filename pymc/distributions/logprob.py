@@ -32,6 +32,7 @@ from aesara.tensor.random.op import RandomVariable
 from aesara.tensor.var import TensorVariable
 
 from pymc.aesaraf import constant_fold, floatX
+from pymc.data import MinibatchIndexRV
 
 TOTAL_SIZE = Union[int, Sequence[int], None]
 
@@ -116,6 +117,7 @@ def _check_no_rvs(logp_terms: Sequence[TensorVariable]):
             node.owner
             and isinstance(node.owner.op, RandomVariable)
             and not isinstance(node.owner.op, SimulatorRV)
+            and not isinstance(node.owner.op, MinibatchIndexRV)
         )
     ]
     if unexpected_rv_nodes:

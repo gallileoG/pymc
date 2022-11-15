@@ -60,7 +60,7 @@ from pymc.aesaraf import (
     replace_rvs_by_values,
 )
 from pymc.blocking import DictToArrayBijection, RaveledVars
-from pymc.data import GenTensorVariable
+from pymc.data import GenTensorVariable, is_minibatch
 from pymc.distributions.logprob import _joint_logp
 from pymc.distributions.transforms import _default_transform
 from pymc.exceptions import ImputationWarning, SamplingError, ShapeError, ShapeWarning
@@ -1311,7 +1311,7 @@ class Model(WithMemoization, metaclass=ContextMeta):
                     isinstance(data.owner.op, Elemwise)
                     and isinstance(data.owner.op.scalar_op, Cast)
                 )
-                and not data.name.startswith("minibatch")
+                and not is_minibatch(data)
             ):
                 raise TypeError(
                     "Variables that depend on other nodes cannot be used for observed data."
