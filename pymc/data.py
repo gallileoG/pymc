@@ -158,9 +158,7 @@ def valid_for_minibatch(v):
     )
 
 
-def Minibatch(
-    variable: TensorVariable, *variables: TensorVariable, batch_size: int
-) -> Tuple[TensorVariable]:
+def Minibatch(variable: TensorVariable, *variables: TensorVariable, batch_size: int):
     """
     Get random slices from variables from the leading dimension.
 
@@ -181,20 +179,20 @@ def Minibatch(
     rng = RandomStream()
     slc = rng.gen(minibatch_index, 0, variable.shape[0], size=batch_size)
     if variables:
-        variables = list(map(at.as_tensor, (variable, *variables)))
-        for i, v in enumerate(variables):
+        tensors = tuple(map(at.as_tensor, (variable, *variables)))
+        for i, v in enumerate(tensors):
             if not valid_for_minibatch(v):
                 raise ValueError(
                     f"{i}: {v} is not valid for Minibatch, only constants or constants.astype(dtype) are allowed"
                 )
-        return tuple([v[slc] for v in variables])
+        return tuple([v[slc] for v in tensors])
     else:
-        variable = at.as_tensor(variable)
-        if not valid_for_minibatch(variable):
+        tensor = at.as_tensor(variable)
+        if not valid_for_minibatch(tensor):
             raise ValueError(
                 f"{variable} is not valid for Minibatch, only constants or constants.astype(dtype) are allowed"
             )
-        return variable[slc]
+        return tensor[slc]
 
 
 def determine_coords(
