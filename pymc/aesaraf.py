@@ -49,7 +49,7 @@ from aesara.graph.basic import (
 )
 from aesara.graph.fg import FunctionGraph
 from aesara.graph.op import Op
-from aesara.sandbox.rng_mrg import MRG_RandomStream as RandomStream
+from aesara.tensor.random import RandomStream
 from aesara.scalar.basic import Cast
 from aesara.tensor.basic import _as_tensor_variable
 from aesara.tensor.elemwise import Elemwise
