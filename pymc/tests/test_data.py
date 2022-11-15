@@ -720,5 +720,22 @@ class TestMinibatch:
     data = np.random.rand(30, 10)
 
     def test_1d(self):
+        from pymc.data import is_minibatch
+
         mb = pm.Minibatch(self.data, batch_size=20)
+        assert is_minibatch(mb)
         assert mb.eval().shape == (20, 10)
+
+    def test_allowed(self):
+        from pymc.data import is_minibatch
+
+        mb = pm.Minibatch(at.as_tensor(self.data).astype(int), batch_size=20)
+        assert is_minibatch(mb)
+
+    def test_not_allowed(self):
+        with pytest.raises(ValueError):
+            mb = pm.Minibatch(at.as_tensor(self.data) * 2, batch_size=20)
+
+    def test_not_allowed2(self):
+        with pytest.raises(ValueError):
+            mb = pm.Minibatch(self.data, at.as_tensor(self.data) * 2, batch_size=20)

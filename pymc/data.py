@@ -133,22 +133,27 @@ minibatch_index = MinibatchIndexRV()
 
 
 def is_minibatch(v):
-    from aesara.scalar import Cast
-    from aesara.tensor.elemwise import Elemwise
     from aesara.tensor.subtensor import AdvancedSubtensor
 
     return (
         isinstance(v.owner.op, AdvancedSubtensor)
         and isinstance(v.owner.inputs[1].owner.op, MinibatchIndexRV)
-        and (
-            v.owner.inputs[0].owner is None
-            # The only Aesara operation we allow on observed data is type casting
-            # Although we could allow for any graph that does not depend on other RVs
-            or (
-                isinstance(v.owner.inputs[0].owner.op, Elemwise)
-                and v.owner.inputs[0].owner.inputs[0].owner is None
-                and isinstance(v.owner.inputs[0].owner.op.scalar_op, Cast)
-            )
+        and valid_for_minibatch(v.owner.inputs[0])
+    )
+
+
+def valid_for_minibatch(v):
+    from aesara.scalar import Cast
+    from aesara.tensor.elemwise import Elemwise
+
+    return (
+        v.owner is None
+        # The only Aesara operation we allow on observed data is type casting
+        # Although we could allow for any graph that does not depend on other RVs
+        or (
+            isinstance(v.owner.op, Elemwise)
+            and v.owner.inputs[0].owner is None
+            and isinstance(v.owner.op.scalar_op, Cast)
         )
     )
 
@@ -176,10 +181,20 @@ def Minibatch(
     rng = RandomStream()
     slc = rng.gen(minibatch_index, 0, variable.shape[0], size=batch_size)
     if variables:
-        variables = (variable, *variables)
-        return tuple([at.as_tensor(v)[slc] for v in variables])
+        variables = list(map(at.as_tensor, (variable, *variables)))
+        for i, v in enumerate(variables):
+            if not valid_for_minibatch(v):
+                raise ValueError(
+                    f"{i}: {v} is not valid for Minibatch, only constants or constants.astype(dtype) are allowed"
+                )
+        return tuple([v[slc] for v in variables])
     else:
-        return at.as_tensor(variable)[slc]
+        variable = at.as_tensor(variable)
+        if not valid_for_minibatch(variable):
+            raise ValueError(
+                f"{variable} is not valid for Minibatch, only constants or constants.astype(dtype) are allowed"
+            )
+        return variable[slc]
 
 
 def determine_coords(
