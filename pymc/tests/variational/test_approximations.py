@@ -174,17 +174,9 @@ def test_seeding_advi_fit():
     with pm.Model():
         x = pm.Normal("x", 0, 10, initval="prior")
         approx1 = pm.fit(
-            random_seed=42,
-            n=10,
-            method="advi",
-            obj_optimizer=pm.adagrad_window,
-            progressbar=False
+            random_seed=42, n=10, method="advi", obj_optimizer=pm.adagrad_window, progressbar=False
         )
         approx2 = pm.fit(
-            random_seed=42,
-            n=10,
-            method="advi",
-            obj_optimizer=pm.adagrad_window,
-            progressbar=False
+            random_seed=42, n=10, method="advi", obj_optimizer=pm.adagrad_window, progressbar=False
         )
         np.testing.assert_allclose(approx1.mean.eval(), approx2.mean.eval())
