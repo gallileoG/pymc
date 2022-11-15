@@ -116,8 +116,7 @@ def _check_no_rvs(logp_terms: Sequence[TensorVariable]):
         if (
             node.owner
             and isinstance(node.owner.op, RandomVariable)
-            and not isinstance(node.owner.op, SimulatorRV)
-            and not isinstance(node.owner.op, MinibatchIndexRV)
+            and not isinstance(node.owner.op, (SimulatorRV, MinibatchIndexRV))
         )
     ]
     if unexpected_rv_nodes:
