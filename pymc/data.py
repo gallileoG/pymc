@@ -138,8 +138,8 @@ def Minibatch(
 
     Examples
     --------
-    >>> data1 = np.random.randn(10, 10)
-    >>> data2 = np.random.randn(10, 20)
+    >>> data1 = np.random.randn(100, 10)
+    >>> data2 = np.random.randn(100, 20)
     >>> mdata1, mdata2 = Minibatch(data1, data2, batch_size=10)
     """
 
