@@ -248,7 +248,7 @@ class EmpiricalGroup(Group):
                 pass
         else:
             size = tuple(np.atleast_1d(size))
-        return self._rng.uniform(
+        return self.srng.uniform(
             size=size, low=pm.floatX(0), high=pm.floatX(self.histogram.shape[0]) - pm.floatX(1e-16)
         ).astype("int32")
 
