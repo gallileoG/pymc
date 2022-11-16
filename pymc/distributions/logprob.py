@@ -33,7 +33,6 @@ from aesara.tensor.var import TensorVariable
 
 from pymc.aesaraf import constant_fold, floatX
 
-
 TOTAL_SIZE = Union[int, Sequence[int], None]
 
 
@@ -108,8 +107,8 @@ def _get_scaling(total_size: TOTAL_SIZE, shape, ndim: int) -> TensorVariable:
 def _check_no_rvs(logp_terms: Sequence[TensorVariable]):
     # Raise if there are unexpected RandomVariables in the logp graph
     # Only SimulatorRVs MinibatchIndexRVs are allowed
-    from pymc.distributions.simulator import SimulatorRV
     from pymc.data import MinibatchIndexRV
+    from pymc.distributions.simulator import SimulatorRV
 
     unexpected_rv_nodes = [
         node
