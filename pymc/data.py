@@ -159,13 +159,13 @@ def valid_for_minibatch(v: TensorVariable) -> bool:
     )
 
 
-def assert_all_shapes_equal(slc, tensor, *tensors):
-    if len(tensors) == 0:
-        return slc
-    slc = Assert(
-        "All variables shape[0] in Minibatch should be equal, check your Minibatch(data1, data2, ...) code"
-    )(slc, at.all([tensor[0].shape[0] == t.shape[0] for t in tensors]))
-    return slc
+def assert_all_scalars_equal(scalar, *scalars):
+    if len(scalars) == 0:
+        return scalar
+    else:
+        return Assert(
+            "All variables shape[0] in Minibatch should be equal, check your Minibatch(data1, data2, ...) code"
+        )(scalar, at.all([scalar == s for s in scalars]))
 
 
 def Minibatch(variable: TensorVariable, *variables: TensorVariable, batch_size: int):
@@ -187,17 +187,16 @@ def Minibatch(variable: TensorVariable, *variables: TensorVariable, batch_size: 
     """
 
     rng = RandomStream()
-    variable = at.as_tensor(variable)
-    slc = rng.gen(minibatch_index, 0, variable.shape[0], size=batch_size)
+    variable, *variables = tuple(map(at.as_tensor, (variable, *variables)))
+    upper = assert_all_scalars_equal(*[t.shape[0] for t in (variable, *variables)])
+    slc = rng.gen(minibatch_index, 0, upper, size=batch_size)
     if variables:
-        tensors = tuple(map(at.as_tensor, (variable, *variables)))
-        slc = assert_all_shapes_equal(slc, *tensors)
-        for i, v in enumerate(tensors):
+        for i, v in enumerate((variable, *variables)):
             if not valid_for_minibatch(v):
                 raise ValueError(
                     f"{i}: {v} is not valid for Minibatch, only constants or constants.astype(dtype) are allowed"
                 )
-        return tuple([v[slc] for v in tensors])
+        return tuple([v[slc] for v in (variable, *variables)])
     else:
         if not valid_for_minibatch(variable):
             raise ValueError(
