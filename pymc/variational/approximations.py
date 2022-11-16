@@ -248,9 +248,7 @@ class EmpiricalGroup(Group):
                 pass
         else:
             size = tuple(np.atleast_1d(size))
-        return self.srng.uniform(
-            size=size, low=pm.floatX(0), high=pm.floatX(self.histogram.shape[0]) - pm.floatX(1e-16)
-        ).astype("int32")
+        return self.srng.integers(size=size, low=0, high=self.histogram.shape[0])
 
     def _new_initial(self, size, deterministic, more_replacements=None):
         aesara_condition_is_here = isinstance(deterministic, Variable)

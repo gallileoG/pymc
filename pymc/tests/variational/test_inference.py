@@ -118,7 +118,7 @@ def inference_spec(request):
 @pytest.fixture(scope="function")
 def inference(inference_spec, simple_model):
     with simple_model:
-        return inference_spec()
+        return inference_spec(random_seed=42)
 
 
 @pytest.fixture(scope="function")
@@ -129,7 +129,7 @@ def fit_kwargs(inference, use_minibatch):
             obj_optimizer=pm.adagrad_window(learning_rate=0.01, n_win=50), n=12000
         ),
         (FullRankADVI, "full"): dict(
-            obj_optimizer=pm.adagrad_window(learning_rate=0.01, n_win=50), n=6000
+            obj_optimizer=pm.adagrad_window(learning_rate=0.015, n_win=50), n=6000
         ),
         (FullRankADVI, "mini"): dict(
             obj_optimizer=pm.adagrad_window(learning_rate=0.007, n_win=50), n=12000
