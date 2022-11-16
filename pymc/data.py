@@ -196,6 +196,8 @@ def Minibatch(variable: TensorVariable, *variables: TensorVariable, batch_size: 
                 f"{i}: {v} is not valid for Minibatch, only constants or constants.astype(dtype) are allowed"
             )
     result = tuple([v[slc] for v in (tensor, *tensors)])
+    for i, r in enumerate(result):
+        r.name = f"minibatch.{i}"
     return result if tensors else result[0]
 
 
