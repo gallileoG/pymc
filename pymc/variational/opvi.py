@@ -710,16 +710,9 @@ class Group(WithMemoization):
         else:
             return super().__new__(cls)
 
-    def __getstate__(self):
-        state = super().__getstate__()
-        state.pop("_rng")
-        return state
-
-    def __setstate__(self, state):
-        seed = state["rng"].randint(2**30, dtype=np.int64)
-        state["rng"].seed(seed)
-        state["_rng"] = RandomStream(seed)
-        return super().__setstate__(state)
+    @property
+    def srng(self):
+        return RandomStream(self.rng.randint(2**30))
 
     def __init__(
         self,
@@ -738,7 +731,6 @@ class Group(WithMemoization):
         self.options = options
         self._vfam = vfam
         self.rng = np.random.RandomState(random_seed)
-        self._rng = RandomStream(random_seed)
         model = modelcontext(model)
         self.model = model
         self.group = group
@@ -955,9 +947,9 @@ class Group(WithMemoization):
             if deterministic:
                 return at.ones(shape, dtype) * dist_map
             else:
-                return getattr(self._rng, dist_name)(size=shape)
+                return getattr(self.srng, dist_name)(size=shape)
         else:
-            sample = getattr(self._rng, dist_name)(size=shape)
+            sample = getattr(self.srng, dist_name)(size=shape)
             initial = at.switch(deterministic, at.ones(shape, dtype) * dist_map, sample)
             return initial
 
