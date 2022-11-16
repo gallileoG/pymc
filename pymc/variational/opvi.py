@@ -56,12 +56,11 @@ import aesara.tensor as at
 import numpy as np
 
 from aesara.graph.basic import Variable
-
+from aesara.tensor.random import RandomStream
 import pymc as pm
 
 from pymc.aesaraf import (
     SeedSequenceSeed,
-    at_rng,
     compile_pymc,
     find_rng_nodes,
     identity,
@@ -370,7 +369,7 @@ class ObjectiveFunction:
             more_replacements=more_replacements,
             total_grad_norm_constraint=total_grad_norm_constraint,
         )
-        seed = self.approx.rng.integers(2**30, dtype=np.int64)
+        seed = self.approx.rng.randint(2**30, dtype=np.int64)
         if score:
             step_fn = compile_pymc([], updates.loss, updates=updates, random_seed=seed, **fn_kwargs)
         else:
@@ -403,7 +402,7 @@ class ObjectiveFunction:
         if more_replacements is None:
             more_replacements = {}
         loss = self(sc_n_mc, more_replacements=more_replacements)
-        seed = self.approx.rng.integers(2**30, dtype=np.int64)
+        seed = self.approx.rng.randint(2**30, dtype=np.int64)
         return compile_pymc([], loss, random_seed=seed, **fn_kwargs)
 
     @aesara.config.change_flags(compute_test_value="off")
@@ -711,6 +710,17 @@ class Group(WithMemoization):
         else:
             return super().__new__(cls)
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        state.pop("_rng")
+        return state
+
+    def __setstate__(self, state):
+        seed = state["rng"].randint(2**30, dtype=np.int64)
+        state["rng"].seed(seed)
+        state["_rng"] = RandomStream(seed)
+        return super().__setstate__(state)
+
     def __init__(
         self,
         group,
@@ -727,8 +737,8 @@ class Group(WithMemoization):
             options = dict()
         self.options = options
         self._vfam = vfam
-        self.rng = np.random.default_rng(random_seed)
-        self._rng = at_rng(random_seed)
+        self.rng = np.random.RandomState(random_seed)
+        self._rng = RandomStream(random_seed)
         model = modelcontext(model)
         self.model = model
         self.group = group
@@ -749,7 +759,7 @@ class Group(WithMemoization):
             jitter_rvs={},
             return_transformed=True,
         )
-        start = ipfn(self.rng.integers(2**30, dtype=np.int64))
+        start = ipfn(self.rng.randint(2**30, dtype=np.int64))
         group_vars = {self.model.rvs_to_values[v].name for v in self.group}
         start = {k: v for k, v in start.items() if k in group_vars}
         start = DictToArrayBijection.map(start).data
