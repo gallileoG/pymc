@@ -695,13 +695,11 @@ class TestScaling:
         assert "Double Ellipsis" in str(e.value)
 
     def test_mixed1(self):
-        from pymc.distributions.logprob import joint_logp
-
         with pm.Model():
             data = np.random.rand(10, 20)
             mb = pm.Minibatch(data, batch_size=5)
             v = pm.Normal("n", observed=mb, total_size=10)
-            assert joint_logp(v) is not None, "Check index is allowed in graph"
+            assert pm.logp(v, 1) is not None, "Check index is allowed in graph"
 
     def test_free_rv(self):
         with pm.Model() as model4:
