@@ -739,3 +739,8 @@ class TestMinibatch:
     def test_not_allowed2(self):
         with pytest.raises(ValueError):
             mb = pm.Minibatch(self.data, at.as_tensor(self.data) * 2, batch_size=20)
+
+    def test_assert(self):
+        with pytest.raises(AssertionError):
+            d1, d2 = pm.Minibatch(self.data, self.data[::2], batch_size=20)
+            d1.eval()

@@ -26,6 +26,7 @@ import aesara.tensor as at
 import numpy as np
 
 from aesara.compile.sharedvalue import SharedVariable
+from aesara.raise_op import Assert
 from aesara.tensor.random import RandomStream
 from aesara.tensor.random.basic import IntegersRV
 from aesara.tensor.type import TensorType
@@ -158,6 +159,15 @@ def valid_for_minibatch(v: TensorVariable) -> bool:
     )
 
 
+def assert_all_shapes_equal(slc, tensor, *tensors):
+    if len(tensors) == 0:
+        return slc
+    slc = Assert(
+        "All variables shape[0] in Minibatch should be equal, check your Minibatch(data1, data2, ...) code"
+    )(slc, at.all([tensor[0].shape[0] == t.shape[0] for t in tensors]))
+    return slc
+
+
 def Minibatch(variable: TensorVariable, *variables: TensorVariable, batch_size: int):
     """
     Get random slices from variables from the leading dimension.
@@ -180,6 +190,7 @@ def Minibatch(variable: TensorVariable, *variables: TensorVariable, batch_size: 
     slc = rng.gen(minibatch_index, 0, variable.shape[0], size=batch_size)
     if variables:
         tensors = tuple(map(at.as_tensor, (variable, *variables)))
+        slc = assert_all_shapes_equal(slc, *tensors)
         for i, v in enumerate(tensors):
             if not valid_for_minibatch(v):
                 raise ValueError(
