@@ -60,7 +60,7 @@ def simple_model_data(use_minibatch):
     d = n / sigma**2 + 1 / sigma0**2
     mu_post = (n * np.mean(data) / sigma**2 + mu0 / sigma0**2) / d
     if use_minibatch:
-        data = pm.Minibatch(data)
+        data = pm.Minibatch(data, batch_size=128)
     return dict(
         n=n,
         data=data,
