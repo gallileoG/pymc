@@ -187,22 +187,22 @@ def Minibatch(variable: TensorVariable, *variables: TensorVariable, batch_size: 
     """
 
     rng = RandomStream()
-    variable, *variables = tuple(map(at.as_tensor, (variable, *variables)))
-    upper = assert_all_scalars_equal(*[t.shape[0] for t in (variable, *variables)])
+    tensor, *tensors = tuple(map(at.as_tensor, (variable, *variables)))
+    upper = assert_all_scalars_equal(*[t.shape[0] for t in (tensor, *tensors)])
     slc = rng.gen(minibatch_index, 0, upper, size=batch_size)
-    if variables:
-        for i, v in enumerate((variable, *variables)):
+    if tensors:
+        for i, v in enumerate((tensor, *tensors)):
             if not valid_for_minibatch(v):
                 raise ValueError(
                     f"{i}: {v} is not valid for Minibatch, only constants or constants.astype(dtype) are allowed"
                 )
-        return tuple([v[slc] for v in (variable, *variables)])
+        return tuple([v[slc] for v in (tensor, *tensors)])
     else:
-        if not valid_for_minibatch(variable):
+        if not valid_for_minibatch(tensor):
             raise ValueError(
                 f"{variable} is not valid for Minibatch, only constants or constants.astype(dtype) are allowed"
             )
-        return variable[slc]
+        return tensor[slc]
 
 
 def determine_coords(
