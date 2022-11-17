@@ -167,7 +167,11 @@ def _known_scan_ignored_inputs(terms):
     from pymc.data import MinibatchIndexRV
     from pymc.distributions.simulator import SimulatorRV
 
-    return [n.owner.inputs[0] for n in find_rng_nodes(terms, (MinibatchIndexRV, SimulatorRV))]
+    return [
+        n.owner.inputs[0]
+        for n in find_rng_nodes(terms)
+        if isinstance(n, (MinibatchIndexRV, SimulatorRV))
+    ]
 
 
 class ObjectiveUpdates(aesara.OrderedUpdates):
