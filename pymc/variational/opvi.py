@@ -77,6 +77,7 @@ from pymc.util import (
     RandomState,
     WithMemoization,
     _get_seeds_per_chain,
+    as_list,
     locally_cachedmethod,
 )
 from pymc.variational.updates import adagrad_window
@@ -160,6 +161,13 @@ def try_to_set_test_value(node_in, node_out, s):
                 if _s is None:
                     tv = tv[0]
                 o.tag.test_value = tv
+
+
+def _known_scan_ignored_inputs(terms):
+    from pymc.data import MinibatchIndexRV
+    from pymc.distributions.simulator import SimulatorRV
+
+    return [n.owner.inputs[0] for n in find_rng_nodes(terms, (MinibatchIndexRV, SimulatorRV))]
 
 
 class ObjectiveUpdates(aesara.OrderedUpdates):
@@ -990,9 +998,12 @@ class Group(WithMemoization):
         -------
         :class:`Variable` with applied replacements, ready to use
         """
+
         flat2rand = self.make_size_and_deterministic_replacements(s, d, more_replacements)
         node_out = aesara.clone_replace(node, flat2rand)
+        assert not (set(as_list(self.input)) & set(aesara.graph.graph_inputs(as_list(node_out))))
         try_to_set_test_value(node, node_out, s)
+        assert self.symbolic_random not in set(aesara.graph.graph_inputs(as_list(node_out)))
         return node_out
 
     def to_flat_input(self, node):
@@ -1007,10 +1018,13 @@ class Group(WithMemoization):
         random = self.symbolic_random.astype(self.symbolic_initial.dtype)
         random = at.specify_shape(random, self.symbolic_initial.type.shape)
 
-        def sample(post, node):
+        def sample(post, *_):
             return aesara.clone_replace(node, {self.input: post})
 
-        nodes, _ = aesara.scan(sample, random, non_sequences=[node])
+        nodes, _ = aesara.scan(
+            sample, random, non_sequences=_known_scan_ignored_inputs(node), strict=True
+        )
+        assert self.input not in set(aesara.graph.graph_inputs(as_list(nodes)))
         return nodes
 
     def symbolic_single_sample(self, node):
@@ -1348,6 +1362,7 @@ class Approximation(WithMemoization):
         flat2rand = self.make_size_and_deterministic_replacements(s, d, more_replacements)
         node = aesara.clone_replace(node, optimizations)
         node = aesara.clone_replace(node, flat2rand)
+        assert not (set(self.symbolic_randoms) & set(aesara.graph.graph_inputs(as_list(node))))
         try_to_set_test_value(_node, node, s)
         return node
 
@@ -1361,12 +1376,18 @@ class Approximation(WithMemoization):
         """*Dev* - performs sampling of node applying independent samples from posterior each time.
         Note that it is done symbolically and this node needs :func:`set_size_and_deterministic` call
         """
-        node = self.to_flat_input(node, more_replacements=more_replacements)
+        node = self.to_flat_input(node)
 
         def sample(*post):
             return aesara.clone_replace(node, dict(zip(self.inputs, post)))
 
-        nodes, _ = aesara.scan(sample, self.symbolic_randoms)
+        nodes, _ = aesara.scan(
+            sample,
+            self.symbolic_randoms,
+            non_sequences=_known_scan_ignored_inputs(node),
+            strict=True,
+        )
+        assert not (set(self.inputs) & set(aesara.graph.graph_inputs(as_list(nodes))))
         return nodes
 
     def symbolic_single_sample(self, node, more_replacements=None):

@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+
 import aesara
 import numpy as np
 
@@ -381,8 +382,13 @@ class Empirical(SingleGroupApproximation):
         """
         node = self.to_flat_input(node)
 
-        def sample(post, node):
+        def sample(post, *_):
             return aesara.clone_replace(node, {self.input: post})
 
-        nodes, _ = aesara.scan(sample, self.histogram, non_sequences=[node])
+        nodes, _ = aesara.scan(
+            sample,
+            self.histogram,
+            non_sequences=opvi._known_scan_ignored_inputs(node),
+            strict=True,
+        )
         return nodes

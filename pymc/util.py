@@ -28,6 +28,12 @@ from aesara.graph.utils import ValidatingScratchpad
 from cachetools import LRUCache, cachedmethod
 
 
+def as_list(obj):
+    if not isinstance(obj, Sequence):
+        obj = [obj]
+    return list(obj)
+
+
 class _UnsetType:
     """Type for the `UNSET` object to make it look nice in `help(...)` outputs."""
 

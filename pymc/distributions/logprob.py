@@ -14,7 +14,7 @@
 import warnings
 
 from collections.abc import Mapping
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Type, Union
 
 import aesara
 import numpy as np
@@ -125,6 +125,22 @@ def _check_no_rvs(logp_terms: Sequence[TensorVariable]):
             "This can happen when DensityDist logp or Interval transform functions "
             "reference nonlocal variables."
         )
+
+
+def find_rng_nodes(
+    terms: Union[TensorVariable, Sequence[TensorVariable]], ops: Sequence[Type] = (RandomVariable,)
+):
+    """
+    Find all Variable instances that are outputs of `ops`
+    """
+    if not isinstance(terms, Sequence):
+        terms = [terms]
+    assert all(issubclass(cls, RandomVariable) for cls in ops)
+    return [
+        node
+        for node in aesara.graph.ancestors(terms)
+        if (node.owner and isinstance(node.owner.op, ops))
+    ]
 
 
 def joint_logp(
